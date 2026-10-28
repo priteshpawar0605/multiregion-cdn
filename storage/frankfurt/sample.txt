@@ -1,0 +1,4 @@
+This is a sample asset stored in the Frankfurt (Europe) origin region.
+File: sample.txt
+Region: Frankfurt
+Created for CDN simulation testing.

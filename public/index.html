@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Region Serverless CDN Dashboard</title>
+  <!-- Bootstrap 5.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+
+  <div class="wrapper d-flex">
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="sidebar">
+      <div class="sidebar-header d-flex align-items-center gap-2 p-3">
+        <i class="bi bi-globe-americas fs-3 text-info"></i>
+        <div>
+          <h5 class="mb-0 text-white fw-bold">Multi-Region CDN</h5>
+          <small class="text-secondary text-uppercase tracking-wider">Edge Simulator</small>
+        </div>
+      </div>
+
+      <ul class="nav flex-column sidebar-nav p-2">
+        <li class="nav-item">
+          <a class="nav-link active" href="#dashboard">
+            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#regions">
+            <i class="bi bi-geo-alt me-2"></i> Regions & Fetch
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#cache">
+            <i class="bi bi-hdd-network me-2"></i> Cache Manager
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#assets">
+            <i class="bi bi-folder me-2"></i> Asset Store
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#benchmark">
+            <i class="bi bi-lightning-charge me-2"></i> Benchmark
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#logs">
+            <i class="bi bi-journal-text me-2"></i> Request Logs
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer mt-auto p-3 text-secondary border-top border-dark small">
+        <div><i class="bi bi-activity text-success me-1"></i> Live Edge Node</div>
+        <div>Local Mock Cluster</div>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="content-area flex-grow-1 p-3 p-md-4">
+      
+      <!-- Top Mobile / Status Bar -->
+      <header class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+        <div>
+          <h2 class="h4 mb-0 fw-bold text-dark" id="page-title">Dashboard Overview</h2>
+          <small class="text-muted" id="page-subtitle">Real-time edge metrics, latency trends, and traffic analytics</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+            <i class="bi bi-arrow-repeat spin-icon me-1"></i> Auto-refresh: 3s
+          </span>
+          <button id="btn-manual-refresh" class="btn btn-sm btn-outline-secondary" title="Refresh Now">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- A. DASHBOARD OVERVIEW -->
+      <section id="dashboard" class="mb-5 section-anchor app-page active-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>System Overview</h4>
+        </div>
+
+        <!-- 6 Stat Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card border-top-blue h-100 shadow-sm">
+              <div class="card-body">
+                <span class="stat-label text-muted small">Total Requests</span>
+                <h3 class="stat-value fw-bold text-dark mt-1 mb-0" id="stat-total-requests">0</h3>
+                <small class="text-secondary"><i class="bi bi-arrow-up-right me-1"></i>Overall</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card border-top-green h-100 shadow-sm">
+              <div class="card-body">
+                <span class="stat-label text-muted small">Cache Hit Rate</span>
+                <h3 class="stat-value fw-bold text-success mt-1 mb-0" id="stat-hit-rate">0%</h3>
+                <small class="text-secondary">Efficiency</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card border-top-teal h-100 shadow-sm">
+              <div class="card-body">
+                <span class="stat-label text-muted small">Hits / Misses</span>
+                <h3 class="stat-value fw-bold text-info mt-1 mb-0" id="stat-hits-misses">0 / 0</h3>
+                <small class="text-secondary">Cache split</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card border-top-orange h-100 shadow-sm">
+              <div class="card-body">
+                <span class="stat-label text-muted small">Avg Latency</span>
+                <h3 class="stat-value fw-bold text-warning mt-1 mb-0" id="stat-avg-latency">0 ms</h3>
+                <small class="text-secondary">Global response</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card border-top-red h-100 shadow-sm">
+              <div class="card-body">
+                <span class="stat-label text-muted small">Failover Events</span>
+                <h3 class="stat-value fw-bold text-danger mt-1 mb-0" id="stat-failover-events">0</h3>
+                <small class="text-secondary">Outage redirects</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-xl-2">
+            <div class="card stat-card border-top-purple h-100 shadow-sm">
+              <div class="card-body">
+                <span class="stat-label text-muted small">Active Regions</span>
+                <h3 class="stat-value fw-bold text-purple mt-1 mb-0" id="stat-active-regions">3 / 3</h3>
+                <small class="text-secondary">Healthy nodes</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="row g-3 mb-3">
+          <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-graph-up text-primary me-2"></i>Response Latency History (ms)</h6>
+                <span class="badge bg-light text-muted border">Real-time</span>
+              </div>
+              <div class="card-body chart-card-body">
+                <canvas id="latencyChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-pie-chart text-success me-2"></i>Cache Ratio</h6>
+              </div>
+              <div class="card-body chart-card-body position-relative d-flex align-items-center justify-content-center">
+                <canvas id="cacheChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="card shadow-sm">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-bar-chart-line text-info me-2"></i>Requests Distribution per Region</h6>
+              </div>
+              <div class="card-body chart-card-body-bar">
+                <canvas id="regionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- B. REGION STATUS & FETCH PANEL -->
+      <section id="regions" class="mb-5 section-anchor app-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-geo-alt text-primary me-2"></i>Region Status & Edge Simulation</h4>
+        </div>
+
+        <!-- Region Cards -->
+        <div class="row g-3 mb-4" id="region-cards-container">
+          <!-- Dynamically populated or rendered initially -->
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100 region-card" id="card-region-mumbai">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h5 class="fw-bold mb-0">🇮🇳 Mumbai (ap-south-1)</h5>
+                    <small class="text-muted">India Primary Edge</small>
+                  </div>
+                  <span class="badge bg-success status-badge" id="badge-mumbai">Online</span>
+                </div>
+                <div class="my-3 py-2 border-top border-bottom small">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Simulated Latency:</span>
+                    <strong id="latency-val-mumbai">~25 ms</strong>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="text-muted">Processed Requests:</span>
+                    <strong id="requests-val-mumbai">0</strong>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-danger btn-sm flex-grow-1 btn-outage" data-region="mumbai">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Simulate Outage
+                  </button>
+                  <button class="btn btn-outline-success btn-sm flex-grow-1 btn-restore" data-region="mumbai">
+                    <i class="bi bi-check2-circle me-1"></i> Restore
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100 region-card" id="card-region-frankfurt">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h5 class="fw-bold mb-0">🇪🇺 Frankfurt (eu-central-1)</h5>
+                    <small class="text-muted">Europe Central Edge</small>
+                  </div>
+                  <span class="badge bg-success status-badge" id="badge-frankfurt">Online</span>
+                </div>
+                <div class="my-3 py-2 border-top border-bottom small">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Simulated Latency:</span>
+                    <strong id="latency-val-frankfurt">~120 ms</strong>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="text-muted">Processed Requests:</span>
+                    <strong id="requests-val-frankfurt">0</strong>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-danger btn-sm flex-grow-1 btn-outage" data-region="frankfurt">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Simulate Outage
+                  </button>
+                  <button class="btn btn-outline-success btn-sm flex-grow-1 btn-restore" data-region="frankfurt">
+                    <i class="bi bi-check2-circle me-1"></i> Restore
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100 region-card" id="card-region-virginia">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h5 class="fw-bold mb-0">🇺🇸 Virginia (us-east-1)</h5>
+                    <small class="text-muted">US East Primary Edge</small>
+                  </div>
+                  <span class="badge bg-success status-badge" id="badge-virginia">Online</span>
+                </div>
+                <div class="my-3 py-2 border-top border-bottom small">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Simulated Latency:</span>
+                    <strong id="latency-val-virginia">~180 ms</strong>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="text-muted">Processed Requests:</span>
+                    <strong id="requests-val-virginia">0</strong>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-danger btn-sm flex-grow-1 btn-outage" data-region="virginia">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Simulate Outage
+                  </button>
+                  <button class="btn btn-outline-success btn-sm flex-grow-1 btn-restore" data-region="virginia">
+                    <i class="bi bi-check2-circle me-1"></i> Restore
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Request Panel -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-cloud-arrow-down text-primary me-2"></i>Test Edge Content Request &amp; Failover</h6>
+          </div>
+          <div class="card-body">
+            <form id="fetch-content-form" class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label for="req-region" class="form-label small fw-semibold text-secondary">Target Region</label>
+                <select id="req-region" class="form-select">
+                  <option value="mumbai">🇮🇳 Mumbai (ap-south-1)</option>
+                  <option value="frankfurt">🇪🇺 Frankfurt (eu-central-1)</option>
+                  <option value="virginia">🇺🇸 Virginia (us-east-1)</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="req-filename" class="form-label small fw-semibold text-secondary">Filename</label>
+                <input type="text" id="req-filename" class="form-control" value="sample.txt" placeholder="e.g. sample.txt">
+              </div>
+              <div class="col-md-2">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="req-nocache">
+                  <label class="form-check-label small" for="req-nocache">
+                    Bypass Cache
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" id="btn-fetch-content" class="btn btn-primary w-100">
+                  <i class="bi bi-send me-1"></i> Fetch Content
+                </button>
+              </div>
+            </form>
+
+            <!-- Result Box -->
+            <div id="fetch-result-box" class="mt-4 p-3 bg-light rounded border d-none">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold text-dark">Response Summary:</span>
+                <span id="fetch-cache-badge" class="badge"></span>
+              </div>
+              <div class="row g-2 small mb-3">
+                <div class="col-sm-3"><strong>Served Region:</strong> <span id="res-served-region">-</span></div>
+                <div class="col-sm-3"><strong>Latency:</strong> <span id="res-latency">-</span></div>
+                <div class="col-sm-3"><strong>Failover Triggered:</strong> <span id="res-failover">-</span></div>
+                <div class="col-sm-3"><strong>Content-Type:</strong> <span id="res-content-type">-</span></div>
+              </div>
+              <div>
+                <label class="form-label small fw-semibold text-muted">Response Payload:</label>
+                <pre id="res-payload" class="p-2 bg-dark text-white rounded small mb-0" style="max-height: 200px; overflow-y: auto;"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- C. CACHE MANAGEMENT -->
+      <section id="cache" class="mb-5 section-anchor app-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-hdd-network text-primary me-2"></i>Edge Cache Management</h4>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="row align-items-center g-3">
+              <div class="col-md-3 text-center border-end">
+                <span class="text-muted small d-block">Cached Items</span>
+                <h3 class="fw-bold text-primary my-1" id="cache-size-val">0</h3>
+                <small class="text-muted">In-memory keys</small>
+              </div>
+              <div class="col-md-3 text-center border-end">
+                <span class="text-muted small d-block">Cumulative Hits</span>
+                <h3 class="fw-bold text-success my-1" id="cache-hits-val">0</h3>
+                <small class="text-muted">Served from cache</small>
+              </div>
+              <div class="col-md-3 text-center border-end">
+                <span class="text-muted small d-block">Cumulative Misses</span>
+                <h3 class="fw-bold text-warning my-1" id="cache-misses-val">0</h3>
+                <small class="text-muted">Origin fetches</small>
+              </div>
+              <div class="col-md-3 text-center">
+                <span class="text-muted small d-block">Hit Rate</span>
+                <h3 class="fw-bold text-info my-1" id="cache-rate-val">0%</h3>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div id="cache-progress-bar" class="progress-bar bg-success" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+              <div class="small text-muted">
+                <i class="bi bi-info-circle me-1"></i> Edge cache stores items based on region and filename with expiration policies.
+              </div>
+              <button id="btn-clear-cache" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash3 me-1"></i> Purge / Clear Cache
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- D. ASSET MANAGEMENT -->
+      <section id="assets" class="mb-5 section-anchor app-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-folder text-primary me-2"></i>Multi-Region Asset Management</h4>
+        </div>
+
+        <div class="row g-4">
+          <!-- Upload Form -->
+          <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-cloud-arrow-up text-primary me-2"></i>Upload New Asset</h6>
+              </div>
+              <div class="card-body">
+                <form id="upload-form">
+                  <div class="mb-3">
+                    <label for="upload-file" class="form-label small fw-semibold text-secondary">Choose File</label>
+                    <input class="form-control" type="file" id="upload-file" required>
+                  </div>
+                  <div class="mb-3">
+                    <label for="upload-region" class="form-label small fw-semibold text-secondary">Initial Region (Primary Origin)</label>
+                    <select id="upload-region" class="form-select">
+                      <option value="mumbai">🇮🇳 Mumbai</option>
+                      <option value="frankfurt">🇪🇺 Frankfurt</option>
+                      <option value="virginia">🇺🇸 Virginia</option>
+                    </select>
+                  </div>
+                  <button type="submit" id="btn-upload" class="btn btn-success w-100">
+                    <i class="bi bi-upload me-1"></i> Upload to Edge
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assets Table -->
+          <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-list-check text-primary me-2"></i>Stored Assets</h6>
+                <button id="btn-refresh-assets" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-arrow-repeat"></i> Refresh
+                </button>
+              </div>
+              <div class="card-body p-0 table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Filename</th>
+                      <th>Size</th>
+                      <th>Available Regions</th>
+                      <th class="text-end">Replication &amp; Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="assets-table-body">
+                    <tr>
+                      <td colspan="4" class="text-center py-4 text-muted">Loading assets...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- E. PERFORMANCE BENCHMARK -->
+      <section id="benchmark" class="mb-5 section-anchor app-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-lightning-charge text-primary me-2"></i>Performance Benchmark</h4>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <form id="benchmark-form" class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label for="bench-filename" class="form-label small fw-semibold text-secondary">Target Asset</label>
+                <input type="text" id="bench-filename" class="form-control" value="sample.txt" placeholder="Filename to benchmark">
+              </div>
+              <div class="col-md-3">
+                <label for="bench-region" class="form-label small fw-semibold text-secondary">Region Origin</label>
+                <select id="bench-region" class="form-select">
+                  <option value="mumbai">🇮🇳 Mumbai</option>
+                  <option value="frankfurt">🇪🇺 Frankfurt</option>
+                  <option value="virginia">🇺🇸 Virginia</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="bench-iterations" class="form-label small fw-semibold text-secondary">Iterations</label>
+                <input type="number" id="bench-iterations" class="form-control" value="10" min="2" max="100">
+              </div>
+              <div class="col-md-2">
+                <button type="submit" id="btn-run-benchmark" class="btn btn-warning text-dark fw-semibold w-100">
+                  <i class="bi bi-play-fill me-1"></i> Benchmark
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Benchmark Results Card -->
+        <div class="card shadow-sm" id="benchmark-results-container">
+          <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-table text-primary me-2"></i>Benchmark Comparative Results</h6>
+          </div>
+          <div class="card-body p-0 table-responsive">
+            <table class="table table-bordered table-striped mb-0 text-center align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th class="text-start">Performance Metric</th>
+                  <th class="table-success text-success-emphasis">Cache Enabled (Edge)</th>
+                  <th class="table-warning text-warning-emphasis">Cache Disabled (Origin)</th>
+                  <th class="table-danger text-danger-emphasis">Simulated Failover</th>
+                </tr>
+              </thead>
+              <tbody id="benchmark-table-body">
+                <tr>
+                  <td class="text-start fw-semibold">Avg Latency</td>
+                  <td id="bench-cache-avg" class="best-metric">-</td>
+                  <td id="bench-nocache-avg">-</td>
+                  <td id="bench-fo-avg">-</td>
+                </tr>
+                <tr>
+                  <td class="text-start fw-semibold">Min Latency</td>
+                  <td id="bench-cache-min">-</td>
+                  <td id="bench-nocache-min">-</td>
+                  <td id="bench-fo-min">N/A</td>
+                </tr>
+                <tr>
+                  <td class="text-start fw-semibold">Max Latency</td>
+                  <td id="bench-cache-max">-</td>
+                  <td id="bench-nocache-max">-</td>
+                  <td id="bench-fo-max">N/A</td>
+                </tr>
+                <tr>
+                  <td class="text-start fw-semibold">Efficiency / Success</td>
+                  <td id="bench-cache-hits">-</td>
+                  <td id="bench-nocache-misses">-</td>
+                  <td id="bench-fo-success">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer bg-white small text-muted">
+            <i class="bi bi-shield-check text-success me-1"></i> Benchmarking sends concurrent bursts to quantify latency reductions and failover resilience.
+          </div>
+        </div>
+      </section>
+
+
+      <!-- G. REQUEST LOGS -->
+      <section id="logs" class="mb-5 section-anchor app-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i>Real-Time Request Log</h4>
+          <span class="badge bg-secondary" id="log-count-badge">0 requests</span>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive log-table-container">
+              <table class="table table-hover table-sm mb-0 align-middle">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>File</th>
+                    <th>Region</th>
+                    <th>Cache Status</th>
+                    <th>Latency</th>
+                    <th>Failover</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="logs-table-body">
+                  <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No request history recorded yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-5 pt-4 pb-3 border-top text-center text-muted small">
+        <p class="mb-1">Multi-Region CDN Simulator | College Mini Project | Built with Node.js &amp; Express</p>
+        <p class="mb-0 text-secondary">Demonstrates Edge Caching, Geo-Routing, Replication, and Automatic Failover</p>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- Bootstrap 5.3 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js 4.x -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- Custom App Script -->
+  <script src="app.js"></script>
+</body>
+</html>

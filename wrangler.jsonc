@@ -1,0 +1,7 @@
+{
+  // Optional Cloudflare Workers configuration
+  // The project runs fully locally without this
+  "name": "multiregion-cdn",
+  "main": "src/index.js",
+  "compatibility_date": "2024-01-01"
+}

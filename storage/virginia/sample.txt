@@ -1,0 +1,4 @@
+This is a sample asset stored in the Virginia (North America) origin region.
+File: sample.txt
+Region: Virginia
+Created for CDN simulation testing.

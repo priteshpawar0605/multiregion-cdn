@@ -1,0 +1,4 @@
+This is a sample asset stored in the Mumbai (India) origin region.
+File: sample.txt
+Region: Mumbai
+Created for CDN simulation testing.
